@@ -40,10 +40,10 @@ def ReadFEN(FEN_string: str):
 
     rows = positions.split("/")
 
-    new_board = [[],[],[],[],[],[]]
+    new_board = [[], [], [], [], [], []]
 
     for r in range(len(rows)):
-        r_prime = len(rows)-1-r
+        r_prime = len(rows) - 1 - r
         for c in rows[r]:
             if c.isnumeric():
                 for i in range(int(c)):
@@ -69,7 +69,6 @@ def ReadFEN(FEN_string: str):
             elif c == 'Q':
                 new_board[r_prime].append(WhiteQueen)
 
-
     if current_player == 'w':
         player = Color.WHITE
     elif current_player == 'b':
@@ -79,56 +78,113 @@ def ReadFEN(FEN_string: str):
 
     return new_board, player, int(halfturns), int(fullturns)
 
+
 def DisplayBoard(board):
     print("  123456")
     print("  ======")
-    for r in range(len(board)-1,-1,-1):
-        row = str(r+1) + "|"
+    for r in range(len(board) - 1, -1, -1):
+        row = str(r + 1) + "|"
         for c in board[r]:
             row += str(c)
         print(row)
 
-def isValidMove(rp,cp,rd,cd,b):
-    selected_piece = b[rp][cp]
 
-    return True
+def isValidMove(rp, cp, rd, cd, b):
+    """
+    Checks if it is possible for the piece at rp,cp to move to rd,cd.
+    :param rp:
+    :param cp:
+    :param rd:
+    :param cd:
+    :param b:
+    :return: Returns True if move is valid, False otherwise.
+    """
 
-def Move(rp,cp,rd,cd,b):
+    if cp < 0 or cp >5 or rd < 0 or rd >5 or rp < 0 or rp >5 or cd < 0 or cd >5:
+        return False
+
+
     selected_piece = b[rp][cp]
+    piece_color = selected_piece.piece_color
+
+    # Unlike in normal chess pawns always move one square at a time.
+    # Double moving the first move doesn't work as well on a 6x6 board.
+    # A double move variant could be fun to try in the future.
+
+    if piece_color == Color.WHITE:
+        forward = 1
+    elif piece_color == Color.BLACK:
+        forward = -1
+
+    if selected_piece.piece_name == Names.PAWN:
+        if cp == cd and rp + forward == rd and b[rd][cd].piece_color == Color.NONE:
+            return True
+        elif abs(cp-cd) == 1 and rp+forward == rd:
+            if piece_color == Color.WHITE and b[rd][cd].piece_color == Color.BLACK:
+                return True
+            elif piece_color == Color.BLACK and b[rd][cd].piece_color == Color.WHITE:
+                return True
+            return False
+
+
+    return False
+
+
+def Move(rp, cp, rd, cd, b):
+    """
+    Moves piece located at rp,cp to rd,cd.  Use isValidMove to ensure move is legal
+    :param rp:
+    :param cp:
+    :param rd:
+    :param cd:
+    :param b:
+    :return:
+    """
+    selected_piece = b[rp][cp]
+    b[rd][cd] = selected_piece
+    b[rp][cp] = EmptySquare
     pass
+
 
 if __name__ == "__main__":
     board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
 
-
-    DisplayBoard(board)
-
-    while(True):
-        if(halfturns >= 50):
+    while (True):
+        if (halfturns >= 50):
             print(f"Game is a draw by 50 move rule.")
             break
 
+        DisplayBoard(board)
 
         print(f"It is move {fullturns} with {current_player} to play.")
 
         valid_selection = False
-        while(not valid_selection):
+        while not valid_selection:
             square = input(f"Pick a square with a {current_player} piece on it (input as two digits rc):")
-            r_piece, c_piece = int(square[0])-1, int(square[1])-1
 
-            if board[r_piece][c_piece].piece_color != current_player:
+            try:
+                r_piece, c_piece = int(square[0]) - 1, int(square[1]) - 1
+
+                if board[r_piece][c_piece].piece_color != current_player:
+                    pass
+                else:
+                    valid_selection = True
+            except IndexError:
                 pass
-            else:
-                valid_selection = True
 
         valid_selection = False
-        while(not valid_selection):
+        while not valid_selection:
             square = input(f"Pick a square to move the {board[r_piece][c_piece]} (input as two digits rc):")
-            r_dest, c_dest = int(square[0]) - 1, int(square[1]) - 1
-            if isValidMove(r_piece,c_piece,r_dest,c_dest,board):
-                valid_selection = True
 
-        Move(r_piece,c_piece,r_dest,c_dest,board)
+            try:
+                r_dest, c_dest = int(square[0]) - 1, int(square[1]) - 1
+
+                if isValidMove(r_piece, c_piece, r_dest, c_dest, board):
+                    Move(r_piece, c_piece, r_dest, c_dest, board)
+                    valid_selection = True
+
+            except IndexError:
+                pass
 
         if current_player == Color.BLACK:
             current_player = Color.WHITE
