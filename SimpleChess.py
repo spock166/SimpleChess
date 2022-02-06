@@ -89,10 +89,12 @@ def DisplayBoard(board):
         print(row)
 
 def isValidMove(rp,cp,rd,cd,b):
+    selected_piece = b[rp][cp]
 
     return True
 
 def Move(rp,cp,rd,cd,b):
+    selected_piece = b[rp][cp]
     pass
 
 if __name__ == "__main__":
