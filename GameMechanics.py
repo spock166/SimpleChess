@@ -72,14 +72,13 @@ def ReadFEN(FEN_string: str):
 
 
 def DisplayBoard(board):
-    print("  ======")
+    print("  _____________")
     for r in range(len(board) - 1, -1, -1):
-        row = str(r + 1) + "|"
+        row = str(r + 1) + " |"
         for c in board[r]:
-            row += str(c)
+            row += str(c) + "|"
         print(row)
-    print("  ======")
-    print("  abcdef")
+    print("   a b c d e f")
 
 
 def isValidPawnMove(piece_row, piece_col, dest_row, dest_col, board):
