@@ -1,3 +1,5 @@
+import copy
+
 from Pieces import *
 
 # Define Piece Prototypes
@@ -349,5 +351,40 @@ def make_move(current_board, player):
 
             except IndexError:
                 pass
-
     return pawn_or_capture, game_over
+
+
+def HypotheticalMove(piece_row, piece_col, dest_row, dest_col, board):
+    """
+    Moves piece located at rp,cp to rd,cd.  Use isValidMove to ensure move is legal
+    :param piece_row:
+    :param piece_col:
+    :param dest_row:
+    :param dest_col:
+    :param board:
+    :return: Returns True if there was a pawn move or a capture.
+    """
+    game_over = False
+    new_board = copy.deepcopy(board)
+
+    selected_piece = new_board[piece_row][piece_col]
+    target_piece = new_board[dest_row][dest_col]
+
+    if target_piece.piece_name == Names.KING:
+        target_piece = selected_piece
+        selected_piece = EmptySquare
+        return new_board, True
+
+    # Update the new board
+    target_piece = selected_piece
+    selected_piece = EmptySquare
+
+    if selected_piece.piece_name == Names.PAWN:
+        if selected_piece.piece_color == Color.WHITE and dest_row == 5:
+            target_piece = WhiteQueen
+        elif selected_piece.piece_color == Color.BLACK and dest_row == 0:
+            target_piece = BlackQueen
+
+    return new_board, game_over
+
+
