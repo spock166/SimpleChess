@@ -72,14 +72,19 @@ def boardValue(board, player_color):
             elif board[r][c].piece_name == Names.PAWN:
                 value += multiplier
 
-            value += 0.1*(len(validMoves(board, player_color)) - len(validMoves(board, player_color)))
+            value += 0.1*(len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
 
     return value
 
 
 def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, game_over):
-    if depth == 0 or game_over:
+    if depth == 0:
         return boardValue(board, player_color), [0,0,0,0]
+
+    if game_over and maximizing_player:
+        return -200, [0,0,0,0]
+    elif game_over and not maximizing_player:
+        return 200, [0,0,0,0]
 
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
 

@@ -160,7 +160,7 @@ if __name__ == "__main__":
             headless = True if selection == 3 else False
             humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless)
         elif selection == 4:
-            computerVsComputer(board, current_player, halfturns, fullturns,5)
+            computerVsComputer(board, current_player, halfturns, fullturns,10)
 
 
 
