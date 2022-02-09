@@ -64,47 +64,9 @@ def humanVsComputer(game_board, cur_player, half, full, human_color, disable_boa
             DisplayBoard(game_board)
 
         print(f"It is move {full} with {cur_player} to play.")
-
+        print(f"Board Valuation: {boardValue(game_board, cur_player)}")
         if cur_player == human_color:
             pawn_move, end_game = make_move(game_board, cur_player)
-        else:
-            pawn_move, end_game = alphaMove(game_board, cur_player,5)
-
-        if end_game:
-            print("Game Over!")
-            break
-
-        # Update half move counter
-        if pawn_move:
-            half = 0
-        else:
-            half += 1
-
-        # Update whose turn it is
-        if cur_player == Color.BLACK:
-            cur_player = Color.WHITE
-            full += 1
-        else:
-            cur_player = Color.BLACK
-
-def computerVsComputer(game_board, cur_player, half, full, depth):
-    random_color = random.choice([Color.BLACK,Color.WHITE])
-    alpha_color = Color.BLACK if random_color == Color.WHITE else Color.WHITE
-    print(f"{random_color} will be playing random moves.")
-    print(f"{alpha_color} will be playing alpha-beta moves to a depth of {depth}.")
-
-    while True:
-        # 50 move rule implemented from chess.
-        if half >= 50:
-            print(f"Game is a draw by 50 move rule.")
-            break
-
-        DisplayBoard(game_board)
-
-        print(f"It is move {full} with {cur_player} to play.")
-
-        if cur_player == alpha_color:
-            pawn_move, end_game = alphaMove(game_board, cur_player,depth)
         else:
             pawn_move, end_game = randomMove(game_board, cur_player)
 
@@ -126,10 +88,47 @@ def computerVsComputer(game_board, cur_player, half, full, depth):
             cur_player = Color.BLACK
 
 
+def computerVsComputer(game_board, cur_player, half, full, depth):
+    random_color = random.choice([Color.BLACK, Color.WHITE])
+    alpha_color = Color.BLACK if random_color == Color.WHITE else Color.WHITE
+    print(f"{random_color} will be playing random moves.")
+    print(f"{alpha_color} will be playing alpha-beta moves to a depth of {depth}.")
+
+    while True:
+        # 50 move rule implemented from chess.
+        if half >= 50:
+            print(f"Game is a draw by 50 move rule.")
+            break
+
+        DisplayBoard(game_board)
+
+        print(f"It is move {full} with {cur_player} to play.")
+
+        if cur_player == alpha_color:
+            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
+        else:
+            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
+
+        if end_game:
+            print("Game Over!")
+            break
+
+        # Update half move counter
+        if pawn_move:
+            half = 0
+        else:
+            half += 1
+
+        # Update whose turn it is
+        if cur_player == Color.BLACK:
+            cur_player = Color.WHITE
+            full += 1
+        else:
+            cur_player = Color.BLACK
 
 
 if __name__ == "__main__":
-    #TODO: Implement GUI with tkinter
+    # TODO: Implement GUI with tkinter
     # window = tk.Tk()
     # main_menu = tk.Label(text = "Main Menu")
     # main_menu.pack()
@@ -145,7 +144,7 @@ if __name__ == "__main__":
         print('|================================|')
 
         selection = -1
-        while selection not in range(1,5):
+        while selection not in range(1, 5):
             selection = int(input('Please select an option (1-5): '))
 
         if selection == 5:
@@ -156,12 +155,8 @@ if __name__ == "__main__":
         if selection == 1:
             humanVsHuman(board, current_player, halfturns, fullturns)
         elif selection == 2 or selection == 3:
-            human_player = random.choice([Color.BLACK,Color.WHITE])
+            human_player = random.choice([Color.BLACK, Color.WHITE])
             headless = True if selection == 3 else False
             humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless)
         elif selection == 4:
-            computerVsComputer(board, current_player, halfturns, fullturns,10)
-
-
-
-
+            computerVsComputer(board, current_player, halfturns, fullturns, 5)

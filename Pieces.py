@@ -14,9 +14,10 @@ class Names(Enum):
     EMPTY = auto()
 
 class Piece:
-    def __init__(self, piece_name=Names.EMPTY, piece_color=Color.NONE):
+    def __init__(self, piece_name=Names.EMPTY, piece_color=Color.NONE, piece_value = 0):
         self.piece_name = piece_name
         self.piece_color = piece_color
+        self.piece_value = piece_value
 
         if piece_name == Names.EMPTY:
             self.piece_char = '_'

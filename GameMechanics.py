@@ -4,20 +4,20 @@ from Pieces import *
 
 # Define Piece Prototypes
 EmptySquare = Piece()
-BlackPawn = Piece(piece_name=Names.PAWN, piece_color=Color.BLACK)
-WhitePawn = Piece(piece_name=Names.PAWN, piece_color=Color.WHITE)
+BlackPawn = Piece(piece_name=Names.PAWN, piece_color=Color.BLACK,piece_value=1)
+WhitePawn = Piece(piece_name=Names.PAWN, piece_color=Color.WHITE,piece_value=1)
 
-BlackBishop = Piece(piece_name=Names.BISHOP, piece_color=Color.BLACK)
-WhiteBishop = Piece(piece_name=Names.BISHOP, piece_color=Color.WHITE)
+BlackBishop = Piece(piece_name=Names.BISHOP, piece_color=Color.BLACK,piece_value=3)
+WhiteBishop = Piece(piece_name=Names.BISHOP, piece_color=Color.WHITE,piece_value=3)
 
-BlackRook = Piece(piece_name=Names.ROOK, piece_color=Color.BLACK)
-WhiteRook = Piece(piece_name=Names.ROOK, piece_color=Color.WHITE)
+BlackRook = Piece(piece_name=Names.ROOK, piece_color=Color.BLACK,piece_value=5)
+WhiteRook = Piece(piece_name=Names.ROOK, piece_color=Color.WHITE,piece_value=5)
 
-BlackKing = Piece(piece_name=Names.KING, piece_color=Color.BLACK)
-WhiteKing = Piece(piece_name=Names.KING, piece_color=Color.WHITE)
+BlackKing = Piece(piece_name=Names.KING, piece_color=Color.BLACK,piece_value=200)
+WhiteKing = Piece(piece_name=Names.KING, piece_color=Color.WHITE,piece_value=200)
 
-BlackQueen = Piece(piece_name=Names.QUEEN, piece_color=Color.BLACK)
-WhiteQueen = Piece(piece_name=Names.QUEEN, piece_color=Color.WHITE)
+BlackQueen = Piece(piece_name=Names.QUEEN, piece_color=Color.BLACK,piece_value=8)
+WhiteQueen = Piece(piece_name=Names.QUEEN, piece_color=Color.WHITE,piece_value=8)
 
 
 def ReadFEN(FEN_string: str):

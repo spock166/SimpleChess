@@ -6,10 +6,10 @@ from GameMechanics import *
 
 
 def randomMove(board, bot_color):
-    selected_move = random.choice(validMoves(board,bot_color))
+    selected_move = random.choice(validMoves(board, bot_color))
     piece_row, piece_col, dest_row, dest_col = selected_move
-    piece_row_convert = piece_row+1
-    dest_row_convert = dest_row+1
+    piece_row_convert = piece_row + 1
+    dest_row_convert = dest_row + 1
 
     if piece_col == 0:
         piece_col_convert = 'a'
@@ -41,75 +41,85 @@ def randomMove(board, bot_color):
     else:
         dest_col_convert = '?'
 
-
-    print(f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
+    print(
+        f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
     if isValidMove(*selected_move, board):
         return Move(*selected_move, board)
 
 
 def boardValue(board, player_color):
+    default_square_values = [[0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
+                             [0.25, 0.40, 0.40, 0.40, 0.40, 0.25],
+                             [0.25, 0.40, 1.00, 1.00, 0.40, 0.25],
+                             [0.25, 0.40, 1.00, 1.00, 0.40, 0.25],
+                             [0.25, 0.40, 1.40, 0.40, 0.40, 0.25],
+                             [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]]
+
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
     value = 0
     for r in range(len(board)):
         for c in range(len(board[r])):
             if board[r][c] == EmptySquare:
                 pass
-
             multiplier = 0
             if board[r][c].piece_color == player_color:
                 multiplier = 1
             elif board[r][c].piece_color == opponent_color:
                 multiplier = -1
+            value += multiplier * board[r][c].piece_value
 
-            if board[r][c].piece_name == Names.KING:
-                value += 200*multiplier
-            elif board[r][c].piece_name == Names.QUEEN:
-                value += 8*multiplier
-            elif board[r][c].piece_name == Names.BISHOP:
-                value += 3*multiplier
-            elif board[r][c].piece_name == Names.ROOK:
-                value += 5*multiplier
-            elif board[r][c].piece_name == Names.PAWN:
-                value += multiplier
+    for move in validMoves(board, player_color):
+        if board[move[2]][move[3]].piece_color == opponent_color:
+            value -= 0.2 * (board[move[0]][move[1]].piece_value - board[move[2]][move[3]].piece_value)
 
-            value += 0.1*(len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
+    for move in validMoves(board, opponent_color):
+        if board[move[2]][move[3]].piece_color == player_color:
+            value += 0.2 * (board[move[0]][move[1]].piece_value - board[move[2]][move[3]].piece_value)
+
+    value += 0.1 * (len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
 
     return value
 
 
-def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, game_over):
-    if depth == 0:
-        return boardValue(board, player_color), [0,0,0,0]
+def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, bot_color, game_over):
+    if game_over:
+        if player_color == bot_color:
+            return -5000, [0, 0, 0, 0]
+        else:
+            return 5000, [0, 0, 0, 0]
 
-    if game_over and maximizing_player:
-        return -200, [0,0,0,0]
-    elif game_over and not maximizing_player:
-        return 200, [0,0,0,0]
+    if depth == 0:
+        return boardValue(board, bot_color), [0, 0, 0, 0]
 
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
+    best_move = validMoves(board, player_color)[0]
 
     if maximizing_player:
         value = -math.inf
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
-            value = max(value, alphaBeta(board_copy, depth-1, alpha, beta, False, opponent_color, game_over)[0])
+            value = max(value,
+                        alphaBeta(board_copy, depth - 1, alpha, beta, False, opponent_color, bot_color, game_over)[0])
             if value >= beta:
                 break
             alpha = max(alpha, value)
-        return value, x
+            best_move = x
+        return value, best_move
     else:
         value = math.inf
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
-            value = min(value, alphaBeta(board_copy, depth-1, alpha, beta, True, opponent_color, game_over)[0])
+            value = min(value,
+                        alphaBeta(board_copy, depth - 1, alpha, beta, True, opponent_color, bot_color, game_over)[0])
             if value <= alpha:
                 break
             beta = min(beta, value)
-        return value, x
+            best_move = x
+        return value, best_move
 
 
 def alphaMove(board, bot_color, depth):
-    value, selected_move = alphaBeta(board, depth, -math.inf, math.inf, True, bot_color, False)
+    value, selected_move = alphaBeta(board, depth, -math.inf, math.inf, True, bot_color, bot_color, False)
 
     piece_row, piece_col, dest_row, dest_col = selected_move
     piece_row_convert = piece_row + 1
@@ -145,10 +155,11 @@ def alphaMove(board, bot_color, depth):
     else:
         dest_col_convert = '?'
 
-    print(f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
+    print(
+        f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
     print(f"{bot_color} evaluated this move to have value {value}.")
 
-    if isValidMove(*selected_move,board):
-        return Move(*selected_move,board)
+    if isValidMove(*selected_move, board):
+        return Move(*selected_move, board)
     else:
         raise Exception('Invalid move selected')
