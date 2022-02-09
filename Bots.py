@@ -87,6 +87,8 @@ def boardValue(board, player_color):
                              [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]]
 
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
+    my_king = False
+    opp_king = False
     value = 0
     for r in range(len(board)):
         for c in range(len(board[r])):
@@ -98,6 +100,17 @@ def boardValue(board, player_color):
             elif board[r][c].piece_color == opponent_color:
                 multiplier = -1
             value += multiplier * board[r][c].piece_value
+
+            if board[r][c].piece_color == player_color and board[r][c].piece_name == Names.KING:
+                my_king = True
+            elif board[r][c].piece_color == opponent_color and board[r][c].piece_name == Names.KING:
+                opp_king = True
+
+    if not my_king:
+        return -5000
+
+    if not opp_king:
+        return 5000
 
     for move in validMoves(board, player_color):
         if board[move[2]][move[3]].piece_color == opponent_color:
