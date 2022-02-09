@@ -1,4 +1,5 @@
 import copy
+import random
 
 from Pieces import *
 
@@ -227,6 +228,7 @@ def isValidMove(piece_row, piece_col, dest_row, dest_col, board):
 
     return False
 
+
 def validMoves(board, player_color):
     valid_moves = []
     for piece_row in range(len(board)):
@@ -237,7 +239,10 @@ def validMoves(board, player_color):
                         if isValidMove(piece_row, piece_col, dest_row, dest_col, board):
                             valid_moves.append([piece_row,piece_col,dest_row,dest_col])
 
+    random.shuffle(valid_moves)
+
     return valid_moves
+
 
 def Move(piece_row, piece_col, dest_row, dest_col, board):
     """
@@ -371,19 +376,19 @@ def HypotheticalMove(piece_row, piece_col, dest_row, dest_col, board):
     target_piece = new_board[dest_row][dest_col]
 
     if target_piece.piece_name == Names.KING:
-        target_piece = selected_piece
-        selected_piece = EmptySquare
+        new_board[dest_row][dest_col] = selected_piece
+        new_board[piece_row][piece_col] = EmptySquare
         return new_board, True
 
     # Update the new board
-    target_piece = selected_piece
-    selected_piece = EmptySquare
+    new_board[dest_row][dest_col] = selected_piece
+    new_board[piece_row][piece_col] = EmptySquare
 
     if selected_piece.piece_name == Names.PAWN:
         if selected_piece.piece_color == Color.WHITE and dest_row == 5:
-            target_piece = WhiteQueen
+            new_board[dest_row][dest_col] = WhiteQueen
         elif selected_piece.piece_color == Color.BLACK and dest_row == 0:
-            target_piece = BlackQueen
+            new_board[dest_row][dest_col] = BlackQueen
 
     return new_board, game_over
 

@@ -51,7 +51,7 @@ def humanVsHuman(game_board, cur_player, half, full):
             cur_player = Color.BLACK
 
 
-def humanVsComputer(game_board, cur_player, half, full, human_color, disable_board):
+def humanVsComputer(game_board, cur_player, half, full, human_color, disable_board, depth):
     while True:
         # 50 move rule implemented from chess.
         if half >= 50:
@@ -64,11 +64,11 @@ def humanVsComputer(game_board, cur_player, half, full, human_color, disable_boa
             DisplayBoard(game_board)
 
         print(f"It is move {full} with {cur_player} to play.")
-        print(f"Board Valuation: {boardValue(game_board, cur_player)}")
+        print(f"Board Valuation from {cur_player}'s perspective: {boardValue(game_board, cur_player)}")
         if cur_player == human_color:
             pawn_move, end_game = make_move(game_board, cur_player)
         else:
-            pawn_move, end_game = randomMove(game_board, cur_player)
+            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
 
         if end_game:
             print("Game Over!")
@@ -88,11 +88,12 @@ def humanVsComputer(game_board, cur_player, half, full, human_color, disable_boa
             cur_player = Color.BLACK
 
 
-def computerVsComputer(game_board, cur_player, half, full, depth):
-    random_color = random.choice([Color.BLACK, Color.WHITE])
-    alpha_color = Color.BLACK if random_color == Color.WHITE else Color.WHITE
-    print(f"{random_color} will be playing random moves.")
-    print(f"{alpha_color} will be playing alpha-beta moves to a depth of {depth}.")
+def computerVsComputer(game_board, cur_player, half, full):
+    white_depth = random.randint(1,8)
+    black_depth = random.randint(1,8)
+
+    print(f"White will be playing alpha-beta moves to a depth of {white_depth}.")
+    print(f"Black will be playing alpha-beta moves to a depth of {black_depth}.")
 
     while True:
         # 50 move rule implemented from chess.
@@ -104,10 +105,10 @@ def computerVsComputer(game_board, cur_player, half, full, depth):
 
         print(f"It is move {full} with {cur_player} to play.")
 
-        if cur_player == alpha_color:
-            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
+        if cur_player == Color.WHITE:
+            pawn_move, end_game = alphaMove(game_board, cur_player, white_depth)
         else:
-            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
+            pawn_move, end_game = alphaMove(game_board, cur_player, black_depth)
 
         if end_game:
             print("Game Over!")
@@ -157,6 +158,6 @@ if __name__ == "__main__":
         elif selection == 2 or selection == 3:
             human_player = random.choice([Color.BLACK, Color.WHITE])
             headless = True if selection == 3 else False
-            humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless)
+            humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless, 5)
         elif selection == 4:
-            computerVsComputer(board, current_player, halfturns, fullturns, 5)
+            computerVsComputer(board, current_player, halfturns, fullturns)

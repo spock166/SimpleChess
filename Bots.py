@@ -47,6 +47,37 @@ def randomMove(board, bot_color):
         return Move(*selected_move, board)
 
 
+def simpleBoardValue(board, player_color):
+    opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
+    value = 0
+    my_king = False
+    opp_king = False
+    for r in range(len(board)):
+        for c in range(len(board[r])):
+            if board[r][c] == EmptySquare:
+                pass
+            multiplier = 0
+            if board[r][c].piece_color == player_color:
+                multiplier = 1
+            elif board[r][c].piece_color == opponent_color:
+                multiplier = -1
+            value += multiplier * board[r][c].piece_value
+
+            if board[r][c].piece_color == player_color and board[r][c].piece_name == Names.KING:
+                my_king = True
+            elif board[r][c].piece_color == opponent_color and board[r][c].piece_name == Names.KING:
+                opp_king = True
+
+    if not my_king:
+        return -5000
+
+    if not opp_king:
+        return 5000
+
+    #value += 0.1 * (len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
+
+    return value
+
 def boardValue(board, player_color):
     default_square_values = [[0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
                              [0.25, 0.40, 0.40, 0.40, 0.40, 0.25],
@@ -80,16 +111,17 @@ def boardValue(board, player_color):
 
     return value
 
+def canIHazEnemyKing(board, player_color):
+    opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
+    for x in validMoves(board, player_color):
+        if board[x[2]][x[3]].piece_name == Names.KING and board[x[2]][x[3]].piece_color == opponent_color:
+            return x
 
-def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, bot_color, game_over):
-    if game_over:
-        if player_color == bot_color:
-            return -5000, [0, 0, 0, 0]
-        else:
-            return 5000, [0, 0, 0, 0]
 
-    if depth == 0:
+def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, player_color, bot_color, game_over):
+    if depth == 0 or game_over:
         return boardValue(board, bot_color), [0, 0, 0, 0]
+
 
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
     best_move = validMoves(board, player_color)[0]
@@ -99,7 +131,7 @@ def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, bot_co
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
             value = max(value,
-                        alphaBeta(board_copy, depth - 1, alpha, beta, False, opponent_color, bot_color, game_over)[0])
+                        alphaBeta(board_copy, depth - 1, current_depth+1,alpha, beta, False, opponent_color, bot_color, game_over)[0])
             if value >= beta:
                 break
             alpha = max(alpha, value)
@@ -110,7 +142,7 @@ def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, bot_co
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
             value = min(value,
-                        alphaBeta(board_copy, depth - 1, alpha, beta, True, opponent_color, bot_color, game_over)[0])
+                        alphaBeta(board_copy, depth - 1, current_depth+1, alpha, beta, True, opponent_color, bot_color, game_over)[0])
             if value <= alpha:
                 break
             beta = min(beta, value)
@@ -119,7 +151,13 @@ def alphaBeta(board, depth, alpha, beta, maximizing_player, player_color, bot_co
 
 
 def alphaMove(board, bot_color, depth):
-    value, selected_move = alphaBeta(board, depth, -math.inf, math.inf, True, bot_color, bot_color, False)
+    kingCapture = canIHazEnemyKing(board, bot_color)
+
+    if kingCapture in validMoves(board, bot_color):
+        value = 5000
+        selected_move = kingCapture
+    else:
+        value, selected_move = alphaBeta(board, depth, 1, -math.inf, math.inf, True, bot_color, bot_color, False)
 
     piece_row, piece_col, dest_row, dest_col = selected_move
     piece_row_convert = piece_row + 1
@@ -162,4 +200,4 @@ def alphaMove(board, bot_color, depth):
     if isValidMove(*selected_move, board):
         return Move(*selected_move, board)
     else:
-        raise Exception('Invalid move selected')
+        raise Exception('Invalid move selected', bot_color, selected_move)
