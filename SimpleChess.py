@@ -1,6 +1,6 @@
 import random
 import tkinter as tk
-
+import sys, time
 from GameMechanics import *
 from Bots import *
 
@@ -128,6 +128,37 @@ def computerVsComputer(game_board, cur_player, half, full):
             cur_player = Color.BLACK
 
 
+def benchmark(game_board, cur_player, half, full, depth):
+    move_times = []
+    while True:
+        # 50 move rule implemented from chess.
+        if half >= 50:
+            break
+
+        start_time = time.time()
+        pawn_move, end_game = alphaMove(game_board, cur_player, depth, suppress_messages=True)
+        end_time = time.time()
+        move_times.append(end_time-start_time)
+        print("Level %d KurisuBot evaluated its move in %.2f seconds" % (depth, move_times[-1]))
+        print("Current evaluation average for this level is %.2f seconds" % (sum(move_times)/len(move_times)))
+        if end_game:
+            print(full)
+            break
+
+        # Update half move counter
+        if pawn_move:
+            half = 0
+        else:
+            half += 1
+
+        # Update whose turn it is
+        if cur_player == Color.BLACK:
+            cur_player = Color.WHITE
+            full += 1
+        else:
+            cur_player = Color.BLACK
+
+
 if __name__ == "__main__":
     # TODO: Implement GUI with tkinter
     # window = tk.Tk()
@@ -135,21 +166,22 @@ if __name__ == "__main__":
     # main_menu.pack()
 
     while True:
-        print('|================================|')
-        print('|Welcome to SimpleChess.         |')
-        print('|1. Human vs. Human              |')
-        print('|2. Human vs. Computer           |')
-        print('|3. Human vs. Computer (headless)|')
-        print('|4. Bot Battle                   |')
-        print('|5. Exit                         |')
-        print('|================================|')
+        print('|==================================|')
+        print('|Welcome to SimpleChess (name TBA).|')
+        print('|1. Human vs. Human                |')
+        print('|2. Human vs. Computer             |')
+        print('|3. Human vs. Computer (headless)  |')
+        print('|4. Bot Battle                     |')
+        print('|5. Benchmark KurisuBot            |')
+        print('|6. Exit                           |')
+        print('|==================================|')
 
         selection = -1
-        while selection not in range(1, 5):
-            selection = int(input('Please select an option (1-5): '))
+        while selection not in range(1, 7):
+            selection = int(input('Please select an option (1-6): '))
 
-        if selection == 5:
-            quit()
+        if selection == 6:
+            sys.exit()
 
         board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
 
@@ -161,3 +193,11 @@ if __name__ == "__main__":
             humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless, 5)
         elif selection == 4:
             computerVsComputer(board, current_player, halfturns, fullturns)
+        elif selection == 5:
+            num_levels = 0
+            while num_levels <= 0:
+                num_levels = int(input('Select maximum depth you would like to test: '))
+
+            for i in range(1,num_levels+1):
+                board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
+                benchmark(board, current_player, halfturns, fullturns, i)

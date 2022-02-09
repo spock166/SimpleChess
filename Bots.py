@@ -74,9 +74,10 @@ def simpleBoardValue(board, player_color):
     if not opp_king:
         return 5000
 
-    #value += 0.1 * (len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
+    # value += 0.1 * (len(validMoves(board, player_color)) - len(validMoves(board, opponent_color)))
 
     return value
+
 
 def boardValue(board, player_color):
     default_square_values = [[0.25, 0.25, 0.25, 0.25, 0.25, 0.25],
@@ -105,12 +106,12 @@ def boardValue(board, player_color):
                 my_king = True
             elif board[r][c].piece_color == opponent_color and board[r][c].piece_name == Names.KING:
                 opp_king = True
-
     if not my_king:
         return -5000
 
     if not opp_king:
         return 5000
+
 
     for move in validMoves(board, player_color):
         if board[move[2]][move[3]].piece_color == opponent_color:
@@ -124,6 +125,7 @@ def boardValue(board, player_color):
 
     return value
 
+
 def canIHazEnemyKing(board, player_color):
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
     for x in validMoves(board, player_color):
@@ -135,7 +137,6 @@ def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, playe
     if depth == 0 or game_over:
         return boardValue(board, bot_color), [0, 0, 0, 0]
 
-
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
     best_move = validMoves(board, player_color)[0]
 
@@ -144,7 +145,8 @@ def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, playe
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
             value = max(value,
-                        alphaBeta(board_copy, depth - 1, current_depth+1,alpha, beta, False, opponent_color, bot_color, game_over)[0])
+                        alphaBeta(board_copy, depth - 1, current_depth + 1, alpha, beta, False, opponent_color,
+                                  bot_color, game_over)[0])
             if value >= beta:
                 break
             alpha = max(alpha, value)
@@ -155,7 +157,8 @@ def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, playe
         for x in validMoves(board, player_color):
             board_copy, game_over = HypotheticalMove(*x, board)
             value = min(value,
-                        alphaBeta(board_copy, depth - 1, current_depth+1, alpha, beta, True, opponent_color, bot_color, game_over)[0])
+                        alphaBeta(board_copy, depth - 1, current_depth + 1, alpha, beta, True, opponent_color,
+                                  bot_color, game_over)[0])
             if value <= alpha:
                 break
             beta = min(beta, value)
@@ -163,12 +166,12 @@ def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, playe
         return value, best_move
 
 
-def alphaMove(board, bot_color, depth):
-    kingCapture = canIHazEnemyKing(board, bot_color)
+def alphaMove(board, bot_color, depth, suppress_messages = False):
+    king_capture = canIHazEnemyKing(board, bot_color)
 
-    if kingCapture in validMoves(board, bot_color):
+    if king_capture in validMoves(board, bot_color):
         value = 5000
-        selected_move = kingCapture
+        selected_move = king_capture
     else:
         value, selected_move = alphaBeta(board, depth, 1, -math.inf, math.inf, True, bot_color, bot_color, False)
 
@@ -206,9 +209,9 @@ def alphaMove(board, bot_color, depth):
     else:
         dest_col_convert = '?'
 
-    print(
-        f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
-    print(f"{bot_color} evaluated this move to have value {value}.")
+    if not suppress_messages:
+        print(f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
+        print(f"{bot_color} evaluated this move to have value {value}.")
 
     if isValidMove(*selected_move, board):
         return Move(*selected_move, board)
