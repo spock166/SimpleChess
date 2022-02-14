@@ -173,7 +173,8 @@ def alphaMove(board, bot_color, depth, suppress_messages = False):
         value = 5000
         selected_move = king_capture
     else:
-        value, selected_move = alphaBeta(board, depth, 1, -math.inf, math.inf, True, bot_color, bot_color, False)
+        value, selected_move = alphaBeta(board, depth, 1, -100, 100, True, bot_color, bot_color, False)
+        #value, selected_move = alphaBeta(board, depth, 1, -math.inf, math.inf, True, bot_color, bot_color, False)
 
     piece_row, piece_col, dest_row, dest_col = selected_move
     piece_row_convert = piece_row + 1

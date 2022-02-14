@@ -74,6 +74,7 @@ def ReadFEN(FEN_string: str):
     return new_board, player, int(halfturns), int(fullturns)
 
 
+# Function to display the board and its pieces
 def DisplayBoard(board):
     print("  _____________")
     for r in range(len(board) - 1, -1, -1):
@@ -97,6 +98,8 @@ def isValidPawnMove(piece_row, piece_col, dest_row, dest_col, board):
     elif piece_color == Color.BLACK:
         forward = -1
 
+    # If the square in front of the pawn is free it may move forward.
+    # Otherwise, check if we can attack diagonally.
     if piece_col == dest_col and piece_row + forward == dest_row and board[dest_row][dest_col].piece_color == Color.NONE:
         return True
     elif abs(piece_col - dest_col) == 1 and piece_row + forward == dest_row:
@@ -181,7 +184,7 @@ def isValidRookMove(piece_row, piece_col, dest_row, dest_col, board):
                     return False
         return True
     else:
-        # What the fuck are we doing not going along a rank or file?
+        # The rook is not going along a rank or file.  This is not good, not fine.
         return False
 
 
@@ -206,11 +209,13 @@ def isValidMove(piece_row, piece_col, dest_row, dest_col, board):
     :return: Returns True if move is valid, False otherwise.
     """
 
+    # We can't move off the board
     if piece_col < 0 or piece_col > 5 or dest_row < 0 or dest_row > 5 or piece_row < 0 or piece_row > 5 or dest_col < 0 or dest_col > 5:
         return False
 
     selected_piece = board[piece_row][piece_col]
 
+    # Depending on what the piece is, see if it can move
     if selected_piece.piece_name == Names.PAWN:
         return isValidPawnMove(piece_row, piece_col, dest_row, dest_col, board)
 
@@ -230,6 +235,13 @@ def isValidMove(piece_row, piece_col, dest_row, dest_col, board):
 
 
 def validMoves(board, player_color):
+    """
+    Get a list of valid moves for a given board and player.
+    :param board:
+    :param player_color:
+    :return:
+    """
+
     valid_moves = []
     for piece_row in range(len(board)):
         for piece_col in range(len(board[piece_row])):
@@ -239,6 +251,7 @@ def validMoves(board, player_color):
                         if isValidMove(piece_row, piece_col, dest_row, dest_col, board):
                             valid_moves.append([piece_row,piece_col,dest_row,dest_col])
 
+    # Shuffle the list of moves.  This is used to give the bot some randomness.  Could be implemented elsewhere.
     random.shuffle(valid_moves)
 
     return valid_moves
@@ -255,12 +268,15 @@ def Move(piece_row, piece_col, dest_row, dest_col, board):
     :return: Returns True if there was a pawn move or a capture.
     """
 
+    # We want to keep track of pawn moves, captures, and if the game is over.
+    # The former is used to determine draws, the latter to determine wins/losses.
     pawn_or_capture = False
     game_over = False
 
     selected_piece = board[piece_row][piece_col]
     target_piece = board[dest_row][dest_col]
 
+    # If we're capturing a king, then the game is over.
     if target_piece.piece_name == Names.KING:
         return True, True
 
@@ -274,6 +290,7 @@ def Move(piece_row, piece_col, dest_row, dest_col, board):
     board[dest_row][dest_col] = selected_piece
     board[piece_row][piece_col] = EmptySquare
 
+    # Promote pawns if necessary.
     if selected_piece.piece_name == Names.PAWN:
         if selected_piece.piece_color == Color.WHITE and dest_row == 5:
             board[dest_row][dest_col] = WhiteQueen
@@ -331,7 +348,6 @@ def make_move(current_board, player):
 
             try:
                 r_dest = int(square[1]) - 1
-
                 col = square[0]
                 if col == 'a':
                     c_dest = 0

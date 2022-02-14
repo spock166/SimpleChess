@@ -1,10 +1,14 @@
 from enum import Enum, auto
 
+
+# Enum to keep track of piece colors
 class Color(Enum):
     BLACK = auto()
     WHITE = auto()
     NONE = auto()
 
+
+# Enum to keep track of piece names.
 class Names(Enum):
     KING = auto()
     QUEEN = auto()
@@ -12,6 +16,7 @@ class Names(Enum):
     ROOK = auto()
     PAWN = auto()
     EMPTY = auto()
+
 
 class Piece:
     def __init__(self, piece_name=Names.EMPTY, piece_color=Color.NONE, piece_value = 0):

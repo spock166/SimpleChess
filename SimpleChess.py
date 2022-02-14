@@ -190,7 +190,11 @@ if __name__ == "__main__":
         elif selection == 2 or selection == 3:
             human_player = random.choice([Color.BLACK, Color.WHITE])
             headless = True if selection == 3 else False
-            humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless, 5)
+            opponent_depth = -1
+
+            while opponent_depth not in range(1, 7):
+                opponent_depth = int(input('Please enter a max depth for KurisuBot to play at (1-6): '))
+            humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless, opponent_depth)
         elif selection == 4:
             computerVsComputer(board, current_player, halfturns, fullturns)
         elif selection == 5:
