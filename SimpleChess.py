@@ -1,5 +1,7 @@
 import random
 import tkinter as tk
+from tkinter.font import  Font
+from PIL import ImageTk, Image
 import sys, time
 from GameMechanics import *
 from Bots import *
@@ -161,9 +163,34 @@ def benchmark(game_board, cur_player, half, full, depth):
 
 if __name__ == "__main__":
     # TODO: Implement GUI with tkinter
-    # window = tk.Tk()
-    # main_menu = tk.Label(text = "Main Menu")
-    # main_menu.pack()
+    WIDTH = 1024
+    HEIGHT = 768
+
+    root = tk.Tk()
+    root.geometry(f"{WIDTH}x{HEIGHT}")
+    root.title('SimpleChess')
+    root.resizable(False,False)
+    menu_bg_img = ImageTk.PhotoImage(Image.open("images/menuBackground.jpg"))
+
+    main_canvas = tk.Canvas(root, width = WIDTH, height=HEIGHT)
+    main_canvas.pack(fill="both", expand=True)
+    main_canvas.create_image(0,0,image = menu_bg_img, anchor="nw")
+    main_canvas.create_text(WIDTH/2,100, text="Welcome to SimpleChess",font="Times 36")
+    button_font = Font(family = 'Times', size = 16, slant = 'roman')
+
+    pvp_game_button = tk.Button(main_canvas, text='New PvP Game', width=25, font=button_font)
+    bot_game_button = tk.Button(main_canvas, text='New Bot Game', width=25, font=button_font)
+    bot_battle_button = tk.Button(main_canvas, text='New Bot Battle', width=25, font=button_font)
+    exit_button = tk.Button(main_canvas, text='Exit', width=25, command=root.destroy, font=button_font)
+
+    pvp_game_button_canvas = main_canvas.create_window(WIDTH/2,200,window = pvp_game_button)
+    bot_game_button_canvas = main_canvas.create_window(WIDTH/2, 300, window=bot_game_button)
+    bot_battle_button_canvas = main_canvas.create_window(WIDTH / 2, 400, window=bot_battle_button)
+    exit_button_canvas = main_canvas.create_window(WIDTH / 2, 500, window=exit_button)
+
+    root.mainloop()
+
+
 
     while True:
         print('|==================================|')
