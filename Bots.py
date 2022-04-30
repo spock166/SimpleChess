@@ -87,6 +87,13 @@ def boardValue(board, player_color):
                              [0.25, 0.40, 1.40, 0.40, 0.40, 0.25],
                              [0.25, 0.25, 0.25, 0.25, 0.25, 0.25]]
 
+    bishop_square_values =  [[1.00, 0.25, 0.25, 0.25, 0.25, 1.00],
+                             [0.25, 1.00, 0.40, 0.40, 1.00, 0.25],
+                             [0.25, 0.40, 1.00, 1.00, 0.40, 0.25],
+                             [0.25, 0.40, 1.00, 1.00, 0.40, 0.25],
+                             [0.25, 1.00, 1.40, 0.40, 1.00, 0.25],
+                             [1.00, 0.25, 0.25, 0.25, 0.25, 1.00]]
+
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
     my_king = False
     opp_king = False
@@ -95,12 +102,18 @@ def boardValue(board, player_color):
         for c in range(len(board[r])):
             if board[r][c] == EmptySquare:
                 pass
+
+            sqr_values = default_square_values
+
+            if board[r][c].piece_name == Names.BISHOP:
+                sqr_values = bishop_square_values
+
             multiplier = 0
             if board[r][c].piece_color == player_color:
                 multiplier = 1
             elif board[r][c].piece_color == opponent_color:
                 multiplier = -1
-            value += multiplier * board[r][c].piece_value
+            value += multiplier * board[r][c].piece_value * sqr_values[r][c]
 
             if board[r][c].piece_color == player_color and board[r][c].piece_name == Names.KING:
                 my_king = True
@@ -126,55 +139,47 @@ def boardValue(board, player_color):
     return value
 
 
-def canIHazEnemyKing(board, player_color):
-    opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
-    for x in validMoves(board, player_color):
-        if board[x[2]][x[3]].piece_name == Names.KING and board[x[2]][x[3]].piece_color == opponent_color:
-            return x
-
-
-def alphaBeta(board, depth, current_depth, alpha, beta, maximizing_player, player_color, bot_color, game_over):
+def minMax(board, depth, maximizing_player, player_color, bot_color, game_over):
     if depth == 0 or game_over:
-        return boardValue(board, bot_color), [0, 0, 0, 0]
+        return simpleBoardValue(board, bot_color)
 
     opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
-    best_move = validMoves(board, player_color)[0]
 
     if maximizing_player:
-        value = -math.inf
-        for x in validMoves(board, player_color):
-            board_copy, game_over = HypotheticalMove(*x, board)
-            value = max(value,
-                        alphaBeta(board_copy, depth - 1, current_depth + 1, alpha, beta, False, opponent_color,
-                                  bot_color, game_over)[0])
-            if value >= beta:
-                break
-            alpha = max(alpha, value)
-            best_move = x
-        return value, best_move
+        best_eval = float("-inf")
+        for move in validMoves(board,player_color):
+            board_copy, game_over = HypotheticalMove(*move, board)
+            result = minMax(board,depth-1, False,opponent_color,bot_color,game_over)
+            best_eval = max(result,best_eval)
+        return best_eval
     else:
-        value = math.inf
-        for x in validMoves(board, player_color):
-            board_copy, game_over = HypotheticalMove(*x, board)
-            value = min(value,
-                        alphaBeta(board_copy, depth - 1, current_depth + 1, alpha, beta, True, opponent_color,
-                                  bot_color, game_over)[0])
-            if value <= alpha:
-                break
-            beta = min(beta, value)
-            best_move = x
-        return value, best_move
+        worst_eval = float("inf")
+        for move in validMoves(board, player_color):
+            board_copy, game_over = HypotheticalMove(*move, board)
+            result = minMax(board, depth - 1, True, opponent_color, bot_color, game_over)
+            worst_eval = min(result, worst_eval)
+        return worst_eval
 
 
-def alphaMove(board, bot_color, depth, suppress_messages = False):
-    king_capture = canIHazEnemyKing(board, bot_color)
+def find_best_min_max_move(board, max_depth, bot_color):
+    best_eval = float("-inf")
+    possible_moves = validMoves(board, bot_color)
+    best_move = possible_moves[0]
+    opponent_color = Color.BLACK if bot_color == Color.WHITE else Color.WHITE
 
-    if king_capture in validMoves(board, bot_color):
-        value = 5000
-        selected_move = king_capture
-    else:
-        value, selected_move = alphaBeta(board, depth, 1, -100, 100, True, bot_color, bot_color, False)
-        #value, selected_move = alphaBeta(board, depth, 1, -math.inf, math.inf, True, bot_color, bot_color, False)
+    for move in possible_moves:
+        #Assume we move
+        board_copy, game_over = HypotheticalMove(*move, board)
+        result = minMax(board_copy,max_depth,False, opponent_color, bot_color, game_over)
+        if result > best_eval:
+            best_eval = result
+            best_move = move
+
+    return best_move, best_eval
+
+
+def minMaxMove(board, bot_color, depth, suppress_messages = False):
+    selected_move, value = find_best_min_max_move(board, depth, bot_color)
 
     piece_row, piece_col, dest_row, dest_col = selected_move
     piece_row_convert = piece_row + 1
@@ -218,3 +223,98 @@ def alphaMove(board, bot_color, depth, suppress_messages = False):
         return Move(*selected_move, board)
     else:
         raise Exception('Invalid move selected', bot_color, selected_move)
+
+
+def alphaBeta(board, depth, maximizing_player, player_color, bot_color, game_over, alpha=float("-inf"), beta=float("inf")):
+    if depth == 0 or game_over:
+        return simpleBoardValue(board, bot_color)
+        #return boardValue(board,bot_color)
+
+    opponent_color = Color.BLACK if player_color == Color.WHITE else Color.WHITE
+    possible_moves = validMoves(board, player_color)
+    random.shuffle(possible_moves)
+
+    if maximizing_player:
+        for move in possible_moves:
+            board_copy, game_over = HypotheticalMove(*move, board)
+            result = alphaBeta(board,depth-1, False,opponent_color,bot_color,game_over,alpha,beta)
+            alpha = max(result,alpha)
+            if beta <= alpha:
+                break
+        return alpha
+    else:
+        for move in possible_moves:
+            board_copy, game_over = HypotheticalMove(*move, board)
+            result = alphaBeta(board, depth - 1, True, opponent_color, bot_color, game_over,alpha,beta)
+            beta = min(result,beta)
+            if beta <= alpha:
+                break
+        return beta
+
+def find_best_alpha_beta_move(board, max_depth, bot_color):
+    best_eval = float("-inf")
+    possible_moves = validMoves(board, bot_color)
+    random.shuffle(possible_moves)
+    best_move = possible_moves[0]
+    opponent_color = Color.BLACK if bot_color == Color.WHITE else Color.WHITE
+
+    for move in possible_moves:
+        #Assume we move
+        board_copy, game_over = HypotheticalMove(*move, board)
+        result = alphaBeta(board_copy,max_depth,False, opponent_color, bot_color, game_over)
+        if result > best_eval:
+            best_eval = result
+            best_move = move
+
+    return best_move, best_eval
+
+
+def alphaBetaMove(board, bot_color, depth, suppress_messages = False):
+    selected_move, value = find_best_alpha_beta_move(board, depth, bot_color)
+
+    piece_row, piece_col, dest_row, dest_col = selected_move
+    piece_row_convert = piece_row + 1
+    dest_row_convert = dest_row + 1
+
+    if piece_col == 0:
+        piece_col_convert = 'a'
+    elif piece_col == 1:
+        piece_col_convert = 'b'
+    elif piece_col == 2:
+        piece_col_convert = 'c'
+    elif piece_col == 3:
+        piece_col_convert = 'd'
+    elif piece_col == 4:
+        piece_col_convert = 'e'
+    elif piece_col == 5:
+        piece_col_convert = 'f'
+    else:
+        piece_row_convert = '?'
+
+    if dest_col == 0:
+        dest_col_convert = 'a'
+    elif dest_col == 1:
+        dest_col_convert = 'b'
+    elif dest_col == 2:
+        dest_col_convert = 'c'
+    elif dest_col == 3:
+        dest_col_convert = 'd'
+    elif dest_col == 4:
+        dest_col_convert = 'e'
+    elif dest_col == 5:
+        dest_col_convert = 'f'
+    else:
+        dest_col_convert = '?'
+
+    if not suppress_messages:
+        print(f"{bot_color} moves {board[piece_row][piece_col].piece_name} from {piece_col_convert}{piece_row_convert} to {dest_col_convert}{dest_row_convert}.")
+        print(f"{bot_color} evaluated this move to have value {value}.")
+
+    if isValidMove(*selected_move, board):
+        return Move(*selected_move, board)
+    else:
+        raise Exception('Invalid move selected', bot_color, selected_move)
+
+
+
+

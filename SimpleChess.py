@@ -1,5 +1,6 @@
 import sys, time
 from Bots import *
+from ELO import *
 import pygame, pygame_gui
 
 # Default Starting FEN
@@ -63,7 +64,8 @@ def humanVsComputer(game_board, cur_player, half, full, human_color, disable_boa
         if cur_player == human_color:
             pawn_move, end_game = make_move(game_board, cur_player)
         else:
-            pawn_move, end_game = alphaMove(game_board, cur_player, depth)
+            pawn_move, end_game = alphaBetaMove(game_board, cur_player, depth)
+            #pawn_move, end_game = minMaxMove(game_board,cur_player,depth)
 
         if end_game:
             print("Game Over!")
@@ -83,31 +85,33 @@ def humanVsComputer(game_board, cur_player, half, full, human_color, disable_boa
             cur_player = Color.BLACK
 
 
-def computerVsComputer(game_board, cur_player, half, full):
-    white_depth = random.randint(1, 8)
-    black_depth = random.randint(1, 8)
-
-    print(f"White will be playing alpha-beta moves to a depth of {white_depth}.")
-    print(f"Black will be playing alpha-beta moves to a depth of {black_depth}.")
+def computerVsComputer(game_board, cur_player, half, full, white_depth, black_depth, suppress_msg = False):
+    if not suppress_msg:
+        print(f"White will be playing alpha-beta moves to a depth of {white_depth}.")
+        print(f"Black will be playing alpha-beta moves to a depth of {black_depth}.")
 
     while True:
         # 50 move rule implemented from chess.
         if half >= 50:
-            print(f"Game is a draw by 50 move rule.")
-            break
+            if not suppress_msg:
+                print(f"Game is a draw by 50 move rule.")
+            return Color.NONE
 
-        DisplayBoard(game_board)
-
-        print(f"It is move {full} with {cur_player} to play.")
+        if not suppress_msg:
+            DisplayBoard(game_board)
+            print(f"It is move {full} with {cur_player} to play.")
 
         if cur_player == Color.WHITE:
-            pawn_move, end_game = alphaMove(game_board, cur_player, white_depth)
+            pawn_move, end_game = alphaBetaMove(game_board, cur_player, white_depth,suppress_messages=suppress_msg)
+            #pawn_move, end_game = minMaxMove(game_board, cur_player, white_depth, suppress_messages=suppress_msg)
         else:
-            pawn_move, end_game = alphaMove(game_board, cur_player, black_depth)
+            pawn_move, end_game = alphaBetaMove(game_board, cur_player, black_depth,suppress_messages=suppress_msg)
+            #pawn_move, end_game = minMaxMove(game_board, cur_player, black_depth, suppress_messages=suppress_msg)
 
         if end_game:
-            print("Game Over!")
-            break
+            if not suppress_msg:
+                print(f"Game Over! {cur_player} wins!")
+            return cur_player
 
         # Update half move counter
         if pawn_move:
@@ -131,7 +135,8 @@ def benchmark(game_board, cur_player, half, full, depth):
             break
 
         start_time = time.time()
-        pawn_move, end_game = alphaMove(game_board, cur_player, depth, suppress_messages=True)
+        pawn_move, end_game = alphaBetaMove(game_board, cur_player, depth, suppress_messages=True)
+        #pawn_move, end_game = minMaxMove(game_board, cur_player, depth, suppress_messages=True)
         end_time = time.time()
         move_times.append(end_time - start_time)
         print("Level %d KurisuBot evaluated its move in %.2f seconds" % (depth, move_times[-1]))
@@ -398,7 +403,8 @@ class SimpleChessGUI:
                         #self.showPvBSettings()
 
             if current_screen == 'PVB' and self.current_player != self.human_color:
-                pawn_or_capture, self.game_over = alphaMove(self.board, self.current_player, self.depth, True)
+                pawn_or_capture, self.game_over = alphaBetaMove(self.board, self.current_player, self.depth, True)
+                #pawn_or_capture, self.game_over = minMaxMove(self.board, self.current_player, self.depth, True)
                 self.showBoardGUI(self.window_surface, self.board)
                 if self.game_over:
                     color = 'black' if self.current_player == Color.BLACK else 'white'
@@ -438,21 +444,22 @@ def consoleChess():
         print('|3. Human vs. Computer (headless)  |')
         print('|4. Bot Battle                     |')
         print('|5. Benchmark KurisuBot            |')
-        print('|6. Exit                           |')
+        print('|6. ELO Tourney                    |')
+        print('|7. Exit                           |')
         print('|==================================|')
 
         selection = -1
-        while selection not in range(1, 7):
+        while selection not in range(1, 8):
             selection = int(input('Please select an option (1-6): '))
 
-        if selection == 6:
+        if selection == 7:
             sys.exit()
 
-        board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
-
         if selection == 1:
+            board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
             humanVsHuman(board, current_player, halfturns, fullturns)
         elif selection == 2 or selection == 3:
+            board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
             human_player = random.choice([Color.BLACK, Color.WHITE])
             headless = True if selection == 3 else False
             opponent_depth = -1
@@ -461,7 +468,25 @@ def consoleChess():
                 opponent_depth = int(input('Please enter a max depth for KurisuBot to play at (1-6): '))
             humanVsComputer(board, current_player, halfturns, fullturns, human_player, headless, opponent_depth)
         elif selection == 4:
-            computerVsComputer(board, current_player, halfturns, fullturns)
+            NUM_EPOCH = 10
+            for blevel in range(1,7):
+                for wlevel in range(1,7):
+                    white, black, draw = 0,0,0
+                    for i in range(NUM_EPOCH):
+                        board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
+                        winner = computerVsComputer(board, current_player, halfturns, fullturns,wlevel,blevel,suppress_msg=True)
+                        print(f"Game {i+1} won by: {winner}")
+                        if winner == Color.WHITE:
+                            white += 1
+                        elif winner == Color.BLACK:
+                            black += 1
+                        else:
+                            draw += 1
+
+                    print(f'===============RESULTS===============')
+                    print(f'Difficulty ({wlevel},{blevel})')
+                    print(f'W: {white} B: {black} D: {draw}')
+                    print(f'=====================================')
         elif selection == 5:
             num_levels = 0
             while num_levels <= 0:
@@ -471,12 +496,44 @@ def consoleChess():
                 board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
                 benchmark(board, current_player, halfturns, fullturns, i)
 
+        elif selection == 6:
+            ELO = [500,500,500]
+            STR = [1,3,5]
+            pairings = [[0,1],[1,2],[0,2],[2,1],[1,0],[2,0]]
+
+            while True:
+                pair = random.choice(pairings)
+                whiteIndex = pair[0]
+                blackIndex = pair[1]
+                wlevel = STR[whiteIndex]
+                blevel = STR[blackIndex]
+
+                print(f"{whiteIndex} vs {blackIndex}")
+
+                board, current_player, halfturns, fullturns = ReadFEN(starting_fen)
+                winner = computerVsComputer(board, current_player, halfturns, fullturns, wlevel, blevel,
+                                            suppress_msg=True)
+
+                if winner == Color.WHITE:
+                    ELO[whiteIndex], ELO[blackIndex] = update_score(ELO[whiteIndex],ELO[blackIndex],1)
+                elif winner == Color.BLACK:
+                    ELO[whiteIndex], ELO[blackIndex] = update_score(ELO[whiteIndex], ELO[blackIndex], 0)
+                else:
+                    ELO[whiteIndex], ELO[blackIndex] = update_score(ELO[whiteIndex], ELO[blackIndex], 0.5)
+
+                print("Current ELO")
+                print(f"Easy Bot:   {int(ELO[0])}")
+                print(f"Medium Bot: {int(ELO[1])}")
+                print(f"Hard Bot:   {int(ELO[2])}")
+                print(f"====================")
+
+
 if __name__ == "__main__":
     # Uncomment for GUI
-    display = SimpleChessGUI();
-    display.runApp()
+    #display = SimpleChessGUI();
+    #display.runApp()
 
     # Uncomment for terminal
-    # consoleChess()
+    consoleChess()
 
 
